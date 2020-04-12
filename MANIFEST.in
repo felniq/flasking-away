@@ -1,0 +1,4 @@
+include piBot/schema.sql
+graft piBot/static
+graft piBot/templates
+global-exclude *.pyc
