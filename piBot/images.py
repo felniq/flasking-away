@@ -4,7 +4,7 @@ from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, send_from_directory, send_file)
 from flask import current_app as app
 from werkzeug.security import check_password_hash, generate_password_hash
-from PIL import Image,
+from PIL import Image
 
 from piBot.db import get_db
 
