@@ -1,15 +1,17 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}All images{% endblock %}</h1>
+  <h1>{% block title %}_muokatut kuvat{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-  <form method="post">
-    <label for="username">Username</label>
-    <input name="username" id="username" required>
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" required>
-    <input type="submit" value="Register">
-  </form>
+   <P>Kaikki _muokatut kuvat.</P>
+   <p>
+
+   </a>
+      {% for image in image_list %}
+         <a href="/images/dummy?image_name={{ image }}">
+         <img alt="jeba" src="/static/cache/thumbnail_{{ image }}">
+      {% endfor %}
+   </p>
 {% endblock %}
