@@ -1,20 +1,42 @@
 import os
+import sys
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, send_from_directory, send_file)
 from flask import current_app as app
 from werkzeug.security import check_password_hash, generate_password_hash
 from PIL import Image
+import glob
+from multiprocessing import Pool
 
 from piBot.db import get_db
 
 bp = Blueprint('images', __name__, url_prefix='/images')
 
 
+def thumbnail(params):
+    filename, N = params
+    print(os.path.join(app.root_path, app.config['CACHE_FOLDER'], "thumbnail_" + filename))
+    if not os.path.isfile(os.path.join(app.root_path, app.config['CACHE_FOLDER'], "thumbnail_" + filename)):
+        thumb_width = 440
+        thumb_height = 440
+        print(filename, file=sys.stderr)
+        # Load just once, then successively scale down
+        #im=Image.open(filename)
+        image = Image.open(os.path.join(app.root_path, app.config['IMAGE_FOLDER'], filename))
+        #image = Image.open(filename)
+        #im.thumbnail((600,600))
+        #im.save(os.path.join(app.root_path, app.config['CACHE_FOLDER'], "thumbnail_" + filename))
+        image.thumbnail((thumb_width, thumb_height), Image.ANTIALIAS)
+        angle = 0
+        out = image.rotate(angle, expand=True)
+        out.save(os.path.join(app.root_path, app.config['CACHE_FOLDER'], "thumbnail_" + filename))
+
+
 def get_all_files():
     image_list = list()
     for file in os.listdir(os.path.join(app.root_path, app.config['IMAGE_FOLDER'])):
-        if file.endswith((".JPG", ".jpg")):
+        if file.endswith((".JPG", ".jpg", ".PNG", ".png")):
             time = os.path.getmtime(os.path.join(app.root_path, app.config['IMAGE_FOLDER'], file))
             image_list.append([file, int(time)])
     return image_list
@@ -70,9 +92,13 @@ def index_images():
     i_list = get_all_files()
     load_folder_to_database(i_list)
     image_name_list = get_images_in_order()
-    for x in i_list:
-        if not os.path.isfile(os.path.join(app.root_path, app.config['CACHE_FOLDER'], "thumbnail_" + x[0])):
-            create_thumbnails(x[0])
+    #for x in i_list:
+    #    if not os.path.isfile(os.path.join(app.root_path, app.config['CACHE_FOLDER'], "thumbnail_" + x[0])):
+    #        create_thumbnails(x[0])
+    files = image_name_list
+    print(files, file=sys.stderr)
+    pool = Pool(4)
+    results = pool.map(thumbnail, zip(files,range((len(files)))))
     error = None
     flash(error)
     # TODO thumbnail all images and make a list of the images in date order

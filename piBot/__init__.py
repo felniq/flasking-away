@@ -1,4 +1,6 @@
 import os
+import psutil
+from gpiozero import CPUTemperature
 from flask import Flask
 from werkzeug.routing import BaseConverter
 
@@ -18,8 +20,8 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
 
     # ensure the instance folder exists
-    cache_folder = os.path.join('static', 'cache')
-    image_folder = os.path.join('nasse', 'images')
+    cache_folder = os.path.join('static', 'nasse' ,'.cache')
+    image_folder = os.path.join('static', 'nasse')
     app.config['CACHE_FOLDER'] = cache_folder
     app.config['IMAGE_FOLDER'] = image_folder
 
@@ -43,6 +45,27 @@ def create_app(test_config=None):
     @app.route('/hello')
     def hello():
         return 'Hello, World!'
+
+    @app.route('/system-stats')
+    def get_system_stats():
+        stat_cpu = "CPU: " + str(psutil.cpu_percent()) + '%'
+
+        cpu = CPUTemperature()
+        stat_cpu_temp = "CPU temp: " + str(cpu.temperature)
+
+        memory = psutil.virtual_memory()
+        # Divide from Bytes -> KB -> MB
+        available = round(memory.available/1024.0/1024.0,1)
+        total = round(memory.total/1024.0/1024.0,1)
+        stat_mem = "RAM: " + str(available) + 'MB free / ' + str(total) + 'MB total ( ' + str(memory.percent) + '% )'
+
+        disk = psutil.disk_usage('/')
+        # Divide from Bytes -> KB -> MB -> GB
+        free = round(disk.free/1024.0/1024.0/1024.0,1)
+        total = round(disk.total/1024.0/1024.0/1024.0,1)
+        stat_disk = "DISK: " + str(free) + 'GB free / ' + str(total) + 'GB total ( ' + str(disk.percent) + '% )'
+
+        return stat_cpu + "<br/>" + stat_cpu_temp + "<br/>" + stat_mem + "<br/>" + stat_disk
 
     from . import db
     db.init_app(app)
